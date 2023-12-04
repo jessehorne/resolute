@@ -1,8 +1,6 @@
 package structs
 
 import (
-	"fmt"
-
 	"github.com/dchest/uniuri"
 )
 
@@ -18,7 +16,6 @@ func NewState() *State {
 
 func (s *State) AddRoom(room *Room) {
 	s.Rooms[room.ID] = room
-	fmt.Println("created room:", room)
 }
 
 func (s *State) HasRoom(id string) bool {

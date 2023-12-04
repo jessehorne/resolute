@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/dchest/uniuri"
 	"github.com/gorilla/websocket"
@@ -228,7 +227,6 @@ func JoinRoomOneTime(s *structs2.State, userID string, c *websocket.Conn, data [
 			uptil := room.OneTimeJoinKeys[:i]
 			until := room.OneTimeJoinKeys[i+1:]
 			room.OneTimeJoinKeys = append(uptil, until...)
-			fmt.Println("DEBUG:", room.OneTimeJoinKeys)
 
 			// send response
 			c.WriteJSON(JoinRoomOneTimeRes{

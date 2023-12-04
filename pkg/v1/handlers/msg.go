@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/gorilla/websocket"
-	"github.com/jessehorne/resolute/structs"
+	"github.com/jessehorne/resolute/pkg/v1/structs"
 )
 
 type SendMessageReqData struct {

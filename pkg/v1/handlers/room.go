@@ -6,7 +6,7 @@ import (
 
 	"github.com/dchest/uniuri"
 	"github.com/gorilla/websocket"
-	"github.com/jessehorne/resolute/structs"
+	structs2 "github.com/jessehorne/resolute/pkg/v1/structs"
 )
 
 type RoomNameReq struct {
@@ -19,19 +19,19 @@ type CreateRoomRequest struct {
 }
 
 type CreateRoomResponse struct {
-	Cmd  string        `json:"cmd"`
-	Room *structs.Room `json:"room"`
+	Cmd  string         `json:"cmd"`
+	Room *structs2.Room `json:"room"`
 }
 
-func CreateRoomHandler(s *structs.State, userID string, c *websocket.Conn, data []byte) error {
+func CreateRoomHandler(s *structs2.State, userID string, c *websocket.Conn, data []byte) error {
 	var cr CreateRoomRequest
 	err := json.Unmarshal(data, &cr)
 	if err != nil {
 		return err
 	}
 
-	newRoom := structs.NewRoom(cr.Data.Name, userID)
-	newRoom.AddUser(&structs.User{
+	newRoom := structs2.NewRoom(cr.Data.Name, userID)
+	newRoom.AddUser(&structs2.User{
 		UserID: userID,
 		Conn:   c,
 	})
@@ -69,7 +69,7 @@ type GetRoomOneTimeKeyResponse struct {
 	Data RoomOneTimeKey `json:"data"`
 }
 
-func GetRoomOneTimeKey(s *structs.State, userID string, c *websocket.Conn, data []byte) error {
+func GetRoomOneTimeKey(s *structs2.State, userID string, c *websocket.Conn, data []byte) error {
 	var r GetRoomOneTimeKeyRequest
 	err := json.Unmarshal(data, &r)
 	if err != nil {
@@ -131,7 +131,7 @@ type RoomForeverKeyRes struct {
 	ForeverJoinKey string `json:"forever_join_key"`
 }
 
-func GetRoomForeverKey(s *structs.State, userID string, c *websocket.Conn, data []byte) error {
+func GetRoomForeverKey(s *structs2.State, userID string, c *websocket.Conn, data []byte) error {
 	var r GetRoomForeverKeyRequest
 	err := json.Unmarshal(data, &r)
 	if err != nil {
@@ -195,7 +195,7 @@ type JoinRoomOneTimeRes struct {
 	Data JoinRoomOneTimeResData `json:"data"`
 }
 
-func JoinRoomOneTime(s *structs.State, userID string, c *websocket.Conn, data []byte) error {
+func JoinRoomOneTime(s *structs2.State, userID string, c *websocket.Conn, data []byte) error {
 	var r JoinRoomOneTimeReq
 	err := json.Unmarshal(data, &r)
 	if err != nil {
@@ -219,7 +219,7 @@ func JoinRoomOneTime(s *structs.State, userID string, c *websocket.Conn, data []
 	for i, k := range room.OneTimeJoinKeys {
 		if k == r.Data.OneTimeKey {
 			// add user to room
-			room.AddUser(&structs.User{
+			room.AddUser(&structs2.User{
 				UserID: userID,
 				Conn:   c,
 			})
@@ -272,7 +272,7 @@ type JoinRoomForeverRes struct {
 	Data JoinRoomForeverResData `json:"data"`
 }
 
-func JoinRoomForever(s *structs.State, userID string, c *websocket.Conn, data []byte) error {
+func JoinRoomForever(s *structs2.State, userID string, c *websocket.Conn, data []byte) error {
 	var r JoinRoomForeverReq
 	err := json.Unmarshal(data, &r)
 	if err != nil {
@@ -317,7 +317,7 @@ func JoinRoomForever(s *structs.State, userID string, c *websocket.Conn, data []
 	}
 
 	// add user to room and send response
-	room.AddUser(&structs.User{
+	room.AddUser(&structs2.User{
 		UserID: userID,
 		Conn:   c,
 	})
@@ -350,7 +350,7 @@ type ResetRoomKeysRes struct {
 	Data ResetRoomKeysResData `json:"data"`
 }
 
-func ResetRoomKeys(s *structs.State, userID string, c *websocket.Conn, data []byte) error {
+func ResetRoomKeys(s *structs2.State, userID string, c *websocket.Conn, data []byte) error {
 	var r ResetRoomKeysReq
 	err := json.Unmarshal(data, &r)
 	if err != nil {

@@ -6,13 +6,13 @@ import (
 
 	"github.com/dchest/uniuri"
 	"github.com/gorilla/websocket"
-	"github.com/jessehorne/resolute/handlers"
-	"github.com/jessehorne/resolute/structs"
+	handlers2 "github.com/jessehorne/resolute/pkg/v1/handlers"
+	"github.com/jessehorne/resolute/pkg/v1/structs"
 )
 
 var State = structs.NewState()
 
-func ServerHandler(w http.ResponseWriter, r *http.Request) {
+func serverHandler(w http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{}
 
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -44,20 +44,39 @@ func handleMessage(c *websocket.Conn, userID string, m []byte) error {
 	}
 
 	if cmd.Cmd == CommandTypeCreateRoom {
-		return handlers.CreateRoomHandler(State, userID, c, m)
+		return handlers2.CreateRoomHandler(State, userID, c, m)
 	} else if cmd.Cmd == CommandTypeGetRoomOneTimeKey {
-		return handlers.GetRoomOneTimeKey(State, userID, c, m)
+		return handlers2.GetRoomOneTimeKey(State, userID, c, m)
 	} else if cmd.Cmd == CommandTypeGetRoomForeverKey {
-		return handlers.GetRoomForeverKey(State, userID, c, m)
+		return handlers2.GetRoomForeverKey(State, userID, c, m)
 	} else if cmd.Cmd == CommandTypeJoinRoomOneTime {
-		return handlers.JoinRoomOneTime(State, userID, c, m)
+		return handlers2.JoinRoomOneTime(State, userID, c, m)
 	} else if cmd.Cmd == CommandTypeJoinRoomForever {
-		return handlers.JoinRoomForever(State, userID, c, m)
+		return handlers2.JoinRoomForever(State, userID, c, m)
 	} else if cmd.Cmd == CommandTypeResetRoomKeys {
-		return handlers.ResetRoomKeys(State, userID, c, m)
+		return handlers2.ResetRoomKeys(State, userID, c, m)
 	} else if cmd.Cmd == CommandTypeSendMessage {
-		return handlers.SendMessage(State, userID, c, m)
+		return handlers2.SendMessage(State, userID, c, m)
 	}
 
 	return nil
+}
+
+type Server struct {
+	Path    string
+	Host    string
+	Handler func(http.ResponseWriter, *http.Request)
+}
+
+func NewServer(path, host string) *Server {
+	return &Server{
+		Path:    path,
+		Host:    host,
+		Handler: serverHandler,
+	}
+}
+
+func (s *Server) Listen() error {
+	http.HandleFunc(s.Path, s.Handler)
+	return http.ListenAndServe(s.Host, nil)
 }

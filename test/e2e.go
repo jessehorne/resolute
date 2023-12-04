@@ -9,8 +9,8 @@ import (
 	"os/signal"
 
 	"github.com/gorilla/websocket"
-	"github.com/jessehorne/resolute/handlers"
-	"github.com/jessehorne/resolute/resolute"
+	handlers2 "github.com/jessehorne/resolute/pkg/v1/handlers"
+	"github.com/jessehorne/resolute/pkg/v1/resolute"
 )
 
 func main() {
@@ -39,7 +39,7 @@ func main() {
 			}
 
 			if cmd.Cmd == "create-room" {
-				var r handlers.CreateRoomResponse
+				var r handlers2.CreateRoomResponse
 				err := json.Unmarshal(message, &r)
 				if err != nil {
 					log.Fatalln("create-room:", err)
@@ -68,7 +68,7 @@ func main() {
 					log.Fatalln("sendMessage", err)
 				}
 			} else if cmd.Cmd == "room-key-onetime" {
-				var r handlers.GetRoomOneTimeKeyResponse
+				var r handlers2.GetRoomOneTimeKeyResponse
 				err := json.Unmarshal(message, &r)
 				if err != nil {
 					log.Fatalln("room-key-onetime:", err)
@@ -84,7 +84,7 @@ func main() {
 					log.Fatalln("joinRoomOneTime", err)
 				}
 			} else if cmd.Cmd == "room-key-forever" {
-				var r handlers.RoomForeverKeyGetRes
+				var r handlers2.RoomForeverKeyGetRes
 				err := json.Unmarshal(message, &r)
 				if err != nil {
 					log.Fatalln("room-key-forever:", err)
@@ -100,7 +100,7 @@ func main() {
 					log.Fatalln("joinRoomForever", err)
 				}
 			} else if cmd.Cmd == "join-room-onetime" {
-				var r handlers.JoinRoomOneTimeRes
+				var r handlers2.JoinRoomOneTimeRes
 				err := json.Unmarshal(message, &r)
 				if err != nil {
 					log.Fatalln("join-room-onetime:", err)
@@ -108,7 +108,7 @@ func main() {
 
 				fmt.Println("[SUCCESS] join room using onetime key", r.Data.RoomID)
 			} else if cmd.Cmd == "join-room-forever" {
-				var r handlers.JoinRoomForeverRes
+				var r handlers2.JoinRoomForeverRes
 				err := json.Unmarshal(message, &r)
 				if err != nil {
 					log.Fatalln("join-room-forever:", err)
@@ -124,7 +124,7 @@ func main() {
 					log.Fatalln("joinRoomForever", err)
 				}
 			} else if cmd.Cmd == "reset-room-keys" {
-				var r handlers.ResetRoomKeysRes
+				var r handlers2.ResetRoomKeysRes
 				err := json.Unmarshal(message, &r)
 				if err != nil {
 					log.Fatalln("reset-room-keys:", err)
@@ -132,7 +132,7 @@ func main() {
 
 				fmt.Println("[SUCCESS] reset room keys", r.Data.RoomID)
 			} else if cmd.Cmd == "send-message" {
-				var r handlers.SendMessageRes
+				var r handlers2.SendMessageRes
 				err := json.Unmarshal(message, &r)
 				if err != nil {
 					log.Fatalln("send-message:", err)
@@ -141,7 +141,7 @@ func main() {
 				fmt.Println("[SUCCESS] sent message", r.Data.RoomID, r.Data.Content, r.Data.From)
 			}
 
-			var r handlers.GetRoomOneTimeKeyResponse
+			var r handlers2.GetRoomOneTimeKeyResponse
 			err = json.Unmarshal(message, &r)
 			if err != nil {
 				log.Println("room key test:", err)

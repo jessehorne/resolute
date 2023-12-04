@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 
-	"github.com/jessehorne/resolute/resolute"
+	"github.com/jessehorne/resolute/pkg/v1/resolute"
 	"github.com/joho/godotenv"
 )
 
@@ -16,9 +14,8 @@ func main() {
 		panic(err)
 	}
 
-	http.HandleFunc("/v1", resolute.ServerHandler)
-	fmt.Println("starting on port ", os.Getenv("APP_PORT"))
-	if err := http.ListenAndServe(":"+os.Getenv("APP_PORT"), nil); err != nil {
-		log.Fatalln(err)
-	}
+	host := fmt.Sprintf("%s:%s", "127.0.0.1", os.Getenv("APP_PORT"))
+	fmt.Println("listening on:", host)
+	s := resolute.NewServer("/v1", host)
+	s.Listen()
 }

@@ -38,3 +38,11 @@ func (s *State) CreateOneTimeRoomKey(id string) string {
 
 	return newKey
 }
+
+func (s *State) CleanupRooms(userID string) {
+	for k, r := range s.Rooms {
+		if r.OwnerID == userID {
+			delete(s.Rooms, k)
+		}
+	}
+}

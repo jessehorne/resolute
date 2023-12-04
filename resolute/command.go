@@ -11,6 +11,8 @@ const (
 	CommandTypeJoinRoomOneTime   = "join-room-onetime"
 	CommandTypeJoinRoomForever   = "join-room-forever"
 	CommandTypeResetRoomKeys     = "reset-room-keys"
+
+	CommandTypeSendMessage = "send-message"
 )
 
 type Command struct {

@@ -31,7 +31,10 @@ func CreateRoomHandler(s *structs.State, userID string, c *websocket.Conn, data 
 	}
 
 	newRoom := structs.NewRoom(cr.Data.Name, userID)
-	newRoom.AddUser(userID)
+	newRoom.AddUser(&structs.User{
+		UserID: userID,
+		Conn:   c,
+	})
 	s.AddRoom(newRoom)
 
 	c.WriteJSON(CreateRoomResponse{
@@ -216,7 +219,10 @@ func JoinRoomOneTime(s *structs.State, userID string, c *websocket.Conn, data []
 	for i, k := range room.OneTimeJoinKeys {
 		if k == r.Data.OneTimeKey {
 			// add user to room
-			room.AddUser(userID)
+			room.AddUser(&structs.User{
+				UserID: userID,
+				Conn:   c,
+			})
 
 			// delete one time key
 			uptil := room.OneTimeJoinKeys[:i]
@@ -311,7 +317,10 @@ func JoinRoomForever(s *structs.State, userID string, c *websocket.Conn, data []
 	}
 
 	// add user to room and send response
-	room.AddUser(userID)
+	room.AddUser(&structs.User{
+		UserID: userID,
+		Conn:   c,
+	})
 
 	c.WriteJSON(JoinRoomForeverRes{
 		Cmd: "join-room-forever",

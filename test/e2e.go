@@ -14,8 +14,8 @@ import (
 )
 
 func main() {
-	u := url.URL{Scheme: "ws", Host: "localhost:8080", Path: "/v1"}
-	fmt.Println("Connecting to 8080")
+	u := url.URL{Scheme: "ws", Host: "localhost:5656", Path: "/v1"}
+	fmt.Println("Connecting to 5656")
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
@@ -58,6 +58,14 @@ func main() {
 				err = c.WriteMessage(websocket.TextMessage, []byte(foreverKey))
 				if err != nil {
 					log.Fatalln("room-key-forever", err)
+				}
+
+				// send test message
+				sendMsg := fmt.Sprintf(`{"cmd": "send-message", "data": { "room_id": "%s", "content": "test message" }}`,
+					r.Room.ID)
+				err = c.WriteMessage(websocket.TextMessage, []byte(sendMsg))
+				if err != nil {
+					log.Fatalln("sendMessage", err)
 				}
 			} else if cmd.Cmd == "room-key-onetime" {
 				var r handlers.GetRoomOneTimeKeyResponse
@@ -123,6 +131,14 @@ func main() {
 				}
 
 				fmt.Println("[SUCCESS] reset room keys", r.Data.RoomID)
+			} else if cmd.Cmd == "send-message" {
+				var r handlers.SendMessageRes
+				err := json.Unmarshal(message, &r)
+				if err != nil {
+					log.Fatalln("send-message:", err)
+				}
+
+				fmt.Println("[SUCCESS] sent message", r.Data.RoomID, r.Data.Content, r.Data.From)
 			}
 
 			var r handlers.GetRoomOneTimeKeyResponse

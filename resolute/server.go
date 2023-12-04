@@ -53,6 +53,8 @@ func handleMessage(c *websocket.Conn, userID string, m []byte) error {
 		return handlers.JoinRoomOneTime(State, userID, c, m)
 	} else if cmd.Cmd == CommandTypeJoinRoomForever {
 		return handlers.JoinRoomForever(State, userID, c, m)
+	} else if cmd.Cmd == CommandTypeResetRoomKeys {
+		return handlers.ResetRoomKeys(State, userID, c, m)
 	}
 
 	return nil

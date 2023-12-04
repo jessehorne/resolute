@@ -107,6 +107,22 @@ func main() {
 				}
 
 				fmt.Println("[SUCCESS] join room using forever key", r.Data.RoomID)
+
+				// reset all keys
+				resetKeys := fmt.Sprintf(`{"cmd": "reset-room-keys", "data": { "room_id": "%s" }}`,
+					r.Data.RoomID)
+				err = c.WriteMessage(websocket.TextMessage, []byte(resetKeys))
+				if err != nil {
+					log.Fatalln("joinRoomForever", err)
+				}
+			} else if cmd.Cmd == "reset-room-keys" {
+				var r handlers.ResetRoomKeysRes
+				err := json.Unmarshal(message, &r)
+				if err != nil {
+					log.Fatalln("reset-room-keys:", err)
+				}
+
+				fmt.Println("[SUCCESS] reset room keys", r.Data.RoomID)
 			}
 
 			var r handlers.GetRoomOneTimeKeyResponse

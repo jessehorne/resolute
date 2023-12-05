@@ -8,14 +8,14 @@ import (
 	"github.com/jessehorne/resolute/pkg/v1/rstructs"
 )
 
-type RoomNameReq struct {
+type CreateRoomRequestData struct {
 	Name     string `json:"name"`
 	Username string `json:"username"`
 }
 
 type CreateRoomRequest struct {
-	Cmd  string      `json:"cmd"`
-	Data RoomNameReq `json:"data"`
+	Cmd  string                `json:"cmd"`
+	Data CreateRoomRequestData `json:"data"`
 }
 
 type CreateRoomResponse struct {
@@ -122,12 +122,12 @@ type RoomForeverKey struct {
 	ForeverJoinKey string `json:"forever_join_key"`
 }
 
-type RoomForeverKeyGetRes struct {
-	Cmd  string            `json:"cmd"`
-	Data RoomForeverKeyRes `json:"data"`
+type GetRoomForeverKeyResponse struct {
+	Cmd  string                        `json:"cmd"`
+	Data GetRoomForeverKeyResponseData `json:"data"`
 }
 
-type RoomForeverKeyRes struct {
+type GetRoomForeverKeyResponseData struct {
 	RoomID         string `json:"room_id"`
 	ForeverJoinKey string `json:"forever_join_key"`
 }
@@ -167,9 +167,9 @@ func GetRoomForeverKey(s *rstructs.State, userID string, c *websocket.Conn, data
 		room.ForeverJoinKey = uniuri.NewLen(32)
 	}
 
-	c.WriteJSON(RoomForeverKeyGetRes{
+	c.WriteJSON(GetRoomForeverKeyResponse{
 		Cmd: "room-key-forever",
-		Data: RoomForeverKeyRes{
+		Data: GetRoomForeverKeyResponseData{
 			RoomID:         r.Data.RoomID,
 			ForeverJoinKey: room.ForeverJoinKey,
 		},
@@ -185,6 +185,7 @@ type JoinRoomOneTimeData struct {
 }
 
 type JoinRoomOneTimeReq struct {
+	Cmd  string              `json:"cmd"`
 	Data JoinRoomOneTimeData `json:"data"`
 }
 

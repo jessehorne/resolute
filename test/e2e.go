@@ -84,7 +84,7 @@ func main() {
 					log.Fatalln("joinRoomOneTime", err)
 				}
 			} else if cmd.Cmd == "room-key-forever" {
-				var r handlers2.RoomForeverKeyGetRes
+				var r handlers2.GetRoomForeverKeyResponse
 				err := json.Unmarshal(message, &r)
 				if err != nil {
 					log.Fatalln("room-key-forever:", err)

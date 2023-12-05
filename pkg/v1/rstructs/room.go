@@ -6,23 +6,20 @@ import (
 
 type Room struct {
 	ID              string           `json:"room_id"`
-	OwnerID         string           `json:"owner_id"`
+	OwnerID         string           `json:"-"`
 	Name            string           `json:"name"`
-	AdminKey        string           `json:"admin_key"`
 	OneTimeJoinKeys []string         `json:"one_time_join_keys"`
 	ForeverJoinKey  string           `json:"forever_join_key"`
-	Users           map[string]*User `json:"users"`
+	Users           map[string]*User `json:"-"`
 }
 
 func NewRoom(name, ownerID string) *Room {
 	id := uniuri.NewLen(32)
-	adminKey := uniuri.NewLen(32)
 
 	return &Room{
 		ID:              id,
 		OwnerID:         ownerID,
 		Name:            name,
-		AdminKey:        adminKey,
 		OneTimeJoinKeys: []string{},
 		ForeverJoinKey:  "",
 		Users:           map[string]*User{},

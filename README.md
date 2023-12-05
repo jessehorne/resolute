@@ -1,9 +1,11 @@
 Resolute
 ===
 
-A simple chat service backend designed for anonymity.
+A simple chat service backend designed for anonymous, short-term conversations.
 
-*Please note: This is a learning project. Use at your own risk.*
+*Please note: This is a learning project. Use at your own risk. While I'm working to build in E2EE and other security/privacy measures over time, this project is unfinished and untested.*
+
+Currently, resolute is best suited for short term conversations where chat history and user identification isn't needed.
 
 # Usage
 
@@ -30,6 +32,10 @@ func main() {
 }
 
 ```
+
+# Client API Documentation
+
+Please see [Client-API.md](./Client-API.md).
 
 # License
 

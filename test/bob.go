@@ -10,9 +10,9 @@ import (
 func main() {
 	c := client.NewClient("/v1", "127.0.0.1:5656")
 
-	roomID := "iL6oB1RBw1AK1Odg6UoU397eDozV3fek"
-	roomKey := "kQQ8ZKpz0PmoqQQbGILvgoMc72etKIbI"
-	testRoom, err := c.JoinRoom("forever", "bob", roomID, roomKey)
+	roomID := "1cziERIkWDI9kKoeB4rytoaEijQUSfCG"
+	roomKey := "UKO25mTKUerloYLJ69syBR9wFwis1zwm"
+	testRoom, err := c.JoinRoom("onetime", "bob", roomID, roomKey)
 	if err != nil {
 		panic(err)
 	}

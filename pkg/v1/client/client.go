@@ -90,7 +90,6 @@ func (c *Client) Listen() {
 					ID:              r.Room.ID,
 					OwnerID:         r.Room.OwnerID,
 					Name:            r.Room.Name,
-					AdminKey:        "",
 					OneTimeJoinKeys: []string{},
 					ForeverJoinKey:  "",
 					Users:           map[string]*rstructs.User{},

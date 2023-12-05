@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/url"
 	"os"
@@ -122,7 +123,7 @@ func (c *Client) Listen() {
 
 				room, ok := c.Rooms[r.Data.RoomID]
 				if ok {
-					room.call("key-onetime", map[string]string{
+					room.call("key-forever", map[string]string{
 						"room_id": r.Data.RoomID,
 						"key":     r.Data.ForeverJoinKey,
 					})
@@ -143,6 +144,62 @@ func (c *Client) Listen() {
 						"content":  r.Data.Content,
 					})
 				}
+			} else if cmd.Cmd == "join-room-onetime" {
+				var r rhandlers.JoinRoomOneTimeRes
+
+				err := json.Unmarshal(message, &r)
+				if err != nil {
+					// TODO
+				}
+
+				if len(c.RoomQueue) == 0 {
+					continue
+				}
+
+				// get first room in queue
+				first := c.RoomQueue[0]
+				first.Room = &rstructs.Room{
+					ID:              r.Data.RoomID,
+					Name:            r.Data.RoomName,
+					OneTimeJoinKeys: []string{},
+					Users:           map[string]*rstructs.User{},
+				}
+
+				c.Rooms[r.Data.RoomID] = first
+				c.RoomQueue = c.RoomQueue[1:]
+
+				first.call("joined", map[string]string{
+					"room_id":   first.Room.ID,
+					"room_name": first.Room.Name,
+				})
+			} else if cmd.Cmd == "join-room-forever" {
+				var r rhandlers.JoinRoomForeverRes
+
+				err := json.Unmarshal(message, &r)
+				if err != nil {
+					// TODO
+				}
+
+				if len(c.RoomQueue) == 0 {
+					continue
+				}
+
+				// get first room in queue
+				first := c.RoomQueue[0]
+				first.Room = &rstructs.Room{
+					ID:              r.Data.RoomID,
+					Name:            r.Data.RoomName,
+					OneTimeJoinKeys: []string{},
+					Users:           map[string]*rstructs.User{},
+				}
+
+				c.Rooms[r.Data.RoomID] = first
+				c.RoomQueue = c.RoomQueue[1:]
+
+				first.call("joined", map[string]string{
+					"room_id":   first.Room.ID,
+					"room_name": first.Room.Name,
+				})
 			}
 		}
 	}()
@@ -153,6 +210,68 @@ func (c *Client) Listen() {
 			return
 		}
 	}
+}
+
+func (c *Client) JoinRoom(keyType, username, roomID, key string) (*CRoom, error) {
+	if keyType == "onetime" {
+		req := rhandlers.JoinRoomOneTimeReq{
+			Cmd: "join-room-onetime",
+			Data: rhandlers.JoinRoomOneTimeData{
+				RoomID:     roomID,
+				OneTimeKey: key,
+				Username:   username,
+			},
+		}
+
+		cr := &CRoom{
+			Client:       c,
+			IsOwner:      false,
+			ReqUsername:  username,
+			Room:         nil,
+			MessageQueue: []string{},
+			callbacks:    map[string]interface{}{},
+		}
+
+		// add room to queue...it gets updated when the server lets us know we created it successfully
+		c.RoomQueue = append(c.RoomQueue, cr)
+
+		err := c.Conn.WriteJSON(req)
+		if err != nil {
+			log.Fatalln("joinRoomOnetime", err)
+		}
+
+		return cr, nil
+	} else if keyType == "forever" {
+		req := rhandlers.JoinRoomForeverReq{
+			Cmd: "join-room-forever",
+			Data: rhandlers.JoinRoomForeverReqData{
+				RoomID:     roomID,
+				ForeverKey: key,
+				Username:   username,
+			},
+		}
+
+		cr := &CRoom{
+			Client:       c,
+			IsOwner:      false,
+			ReqUsername:  username,
+			Room:         nil,
+			MessageQueue: []string{},
+			callbacks:    map[string]interface{}{},
+		}
+
+		// add room to queue...it gets updated when the server lets us know we created it successfully
+		c.RoomQueue = append(c.RoomQueue, cr)
+
+		err := c.Conn.WriteJSON(req)
+		if err != nil {
+			log.Fatalln("joinRoomForever", err)
+		}
+
+		return cr, nil
+	}
+
+	return nil, errors.New("invalid keyType")
 }
 
 func (c *Client) CreateRoom(name, username string) *CRoom {

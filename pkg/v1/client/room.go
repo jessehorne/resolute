@@ -40,6 +40,9 @@ func (r *CRoom) call(name string, data interface{}) {
 		} else if name == "send-message" {
 			d := data.(map[string]string)
 			cb.(func(string, string, string, string))(d["room_id"], d["user_id"], d["username"], d["content"])
+		} else if name == "joined" {
+			d := data.(map[string]string)
+			cb.(func(string, string))(d["room_id"], d["room_name"])
 		}
 	}
 }

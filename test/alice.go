@@ -10,7 +10,7 @@ import (
 func main() {
 	c := client.NewClient("/v1", "127.0.0.1:5656")
 
-	testRoom := c.CreateRoom("test room", "bob")
+	testRoom := c.CreateRoom("test room", "alice")
 
 	testRoom.On("created", func() {
 		fmt.Println("[SUCCESS] room created")
@@ -26,9 +26,9 @@ func main() {
 		})
 
 		go func() {
-			for i := 0; i < 5; i++ {
-				time.Sleep(3 * time.Second)
-				testRoom.SendMessage("testing " + string(i))
+			for {
+				testRoom.SendMessage("hello world")
+				time.Sleep(5 * time.Second)
 			}
 		}()
 		testRoom.On("send-message", func(roomID, userID, username, content string) {

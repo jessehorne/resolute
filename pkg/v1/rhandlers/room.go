@@ -190,7 +190,8 @@ type JoinRoomOneTimeReq struct {
 }
 
 type JoinRoomOneTimeResData struct {
-	RoomID string `json:"room_id"`
+	RoomID   string `json:"room_id"`
+	RoomName string `json:"room_name"`
 }
 
 type JoinRoomOneTimeRes struct {
@@ -237,7 +238,8 @@ func JoinRoomOneTime(s *rstructs.State, userID string, c *websocket.Conn, data [
 			c.WriteJSON(JoinRoomOneTimeRes{
 				Cmd: "join-room-onetime",
 				Data: JoinRoomOneTimeResData{
-					RoomID: r.Data.RoomID,
+					RoomID:   r.Data.RoomID,
+					RoomName: room.Name,
 				},
 			})
 
@@ -268,7 +270,8 @@ type JoinRoomForeverReq struct {
 }
 
 type JoinRoomForeverResData struct {
-	RoomID string `json:"room_id"`
+	RoomID   string `json:"room_id"`
+	RoomName string `json:"room_name"`
 }
 
 type JoinRoomForeverRes struct {
@@ -330,7 +333,8 @@ func JoinRoomForever(s *rstructs.State, userID string, c *websocket.Conn, data [
 	c.WriteJSON(JoinRoomForeverRes{
 		Cmd: "join-room-forever",
 		Data: JoinRoomForeverResData{
-			RoomID: room.ID,
+			RoomID:   room.ID,
+			RoomName: room.Name,
 		},
 	})
 

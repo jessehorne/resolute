@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/jessehorne/resolute/pkg/v1/client"
 )
@@ -22,6 +23,16 @@ func main() {
 		testRoom.GetKey("forever")
 		testRoom.On("key-forever", func(roomID, key string) {
 			fmt.Println("[SUCCESS] got forever key:", key)
+		})
+
+		go func() {
+			for i := 0; i < 5; i++ {
+				time.Sleep(3 * time.Second)
+				testRoom.SendMessage("testing " + string(i))
+			}
+		}()
+		testRoom.On("send-message", func(roomID, userID, username, content string) {
+			fmt.Println(fmt.Sprintf("[MESSAGE] RoomID: %s | UserID: %s | Username: %s | Content: %s", roomID, userID, username, content))
 		})
 	})
 

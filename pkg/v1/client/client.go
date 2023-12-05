@@ -23,6 +23,8 @@ type Client struct {
 	Host string
 	Path string
 
+	UserID string
+
 	// when user creates room, we add CRoom to RoomQueue. When Rooms is filled,
 	// we'll update the CRoom's reference to Room
 	Rooms     map[string]*CRoom // rooms the user is in. key is the room id
@@ -123,6 +125,22 @@ func (c *Client) Listen() {
 					room.call("key-onetime", map[string]string{
 						"room_id": r.Data.RoomID,
 						"key":     r.Data.ForeverJoinKey,
+					})
+				}
+			} else if cmd.Cmd == "send-message" {
+				var r rhandlers.SendMessageRes
+				err := json.Unmarshal(message, &r)
+				if err != nil {
+					// TODO
+				}
+
+				room, ok := c.Rooms[r.Data.RoomID]
+				if ok {
+					room.call("send-message", map[string]string{
+						"room_id":  r.Data.RoomID,
+						"user_id":  r.Data.UserID,
+						"username": r.Data.Username,
+						"content":  r.Data.Content,
 					})
 				}
 			}

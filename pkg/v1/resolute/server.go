@@ -26,6 +26,9 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		_, msg, err := c.ReadMessage()
 		if err != nil {
+			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+				break
+			}
 			log.Println("read:", err)
 			break
 		}

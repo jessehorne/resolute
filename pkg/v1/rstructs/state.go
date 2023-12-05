@@ -1,4 +1,4 @@
-package structs
+package rstructs
 
 import (
 	"github.com/dchest/uniuri"

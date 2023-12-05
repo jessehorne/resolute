@@ -1,4 +1,4 @@
-package structs
+package rstructs
 
 import (
 	"github.com/dchest/uniuri"
@@ -41,9 +41,10 @@ func (r *Room) AddUser(u *User) {
 }
 
 type BroadcastMessageResData struct {
-	RoomID  string `json:"room_id"`
-	From    string `json:"from"`
-	Content string `json:"content"`
+	RoomID   string `json:"room_id"`
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
+	Content  string `json:"content"`
 }
 
 type BroadcastMessageRes struct {
@@ -61,9 +62,10 @@ func (r *Room) BroadcastMessage(userID, content string) {
 		user.Conn.WriteJSON(BroadcastMessageRes{
 			Cmd: "send-message",
 			Data: BroadcastMessageResData{
-				RoomID:  r.ID,
-				From:    u.UserID,
-				Content: content,
+				RoomID:   r.ID,
+				UserID:   u.UserID,
+				Username: u.Username,
+				Content:  content,
 			},
 		})
 	}

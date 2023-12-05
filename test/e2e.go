@@ -9,8 +9,8 @@ import (
 	"os/signal"
 
 	"github.com/gorilla/websocket"
-	handlers2 "github.com/jessehorne/resolute/pkg/v1/handlers"
 	"github.com/jessehorne/resolute/pkg/v1/resolute"
+	handlers2 "github.com/jessehorne/resolute/pkg/v1/rhandlers"
 )
 
 func main() {
@@ -77,7 +77,7 @@ func main() {
 				fmt.Println("[SUCCESS] get onetime join key", r.Data.RoomID, r.Data.OneTimeKey)
 
 				// attempt to join room with onetime key
-				joinRoomOneTime := fmt.Sprintf(`{"cmd": "join-room-onetime", "data": { "room_id": "%s", "one_time_key": "%s" }}`,
+				joinRoomOneTime := fmt.Sprintf(`{"cmd": "join-room-onetime", "data": { "room_id": "%s", "one_time_key": "%s", "username": "bob" }}`,
 					r.Data.RoomID, r.Data.OneTimeKey)
 				err = c.WriteMessage(websocket.TextMessage, []byte(joinRoomOneTime))
 				if err != nil {
@@ -93,7 +93,7 @@ func main() {
 				fmt.Println("[SUCCESS] get forever join key", r.Data.RoomID, r.Data.ForeverJoinKey)
 
 				// attempt to join room with forever key
-				joinRoomForever := fmt.Sprintf(`{"cmd": "join-room-forever", "data": { "room_id": "%s", "forever_key": "%s" }}`,
+				joinRoomForever := fmt.Sprintf(`{"cmd": "join-room-forever", "data": { "room_id": "%s", "forever_key": "%s", "username": "bob" }}`,
 					r.Data.RoomID, r.Data.ForeverJoinKey)
 				err = c.WriteMessage(websocket.TextMessage, []byte(joinRoomForever))
 				if err != nil {
@@ -138,7 +138,7 @@ func main() {
 					log.Fatalln("send-message:", err)
 				}
 
-				fmt.Println("[SUCCESS] sent message", r.Data.RoomID, r.Data.Content, r.Data.From)
+				fmt.Println("[SUCCESS] got message from: ", r.Data.Username, r.Data.RoomID, r.Data.Content, r.Data.UserID)
 			}
 
 			var r handlers2.GetRoomOneTimeKeyResponse
@@ -154,7 +154,7 @@ func main() {
 	// TESTS
 
 	// Create room
-	createRoom := `{"cmd": "create-room", "data": { "name": "test room 123" }}`
+	createRoom := `{"cmd": "create-room", "data": { "name": "test room 123", "username": "bob" }}`
 	err = c.WriteMessage(websocket.TextMessage, []byte(createRoom))
 	if err != nil {
 		log.Fatalln("createRoom", err)

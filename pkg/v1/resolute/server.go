@@ -6,11 +6,11 @@ import (
 
 	"github.com/dchest/uniuri"
 	"github.com/gorilla/websocket"
-	handlers2 "github.com/jessehorne/resolute/pkg/v1/handlers"
-	"github.com/jessehorne/resolute/pkg/v1/structs"
+	handlers2 "github.com/jessehorne/resolute/pkg/v1/rhandlers"
+	"github.com/jessehorne/resolute/pkg/v1/rstructs"
 )
 
-var State = structs.NewState()
+var State = rstructs.NewState()
 
 func serverHandler(w http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{}

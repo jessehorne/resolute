@@ -1,10 +1,10 @@
-package handlers
+package rhandlers
 
 import (
 	"encoding/json"
 
 	"github.com/gorilla/websocket"
-	"github.com/jessehorne/resolute/pkg/v1/structs"
+	"github.com/jessehorne/resolute/pkg/v1/rstructs"
 )
 
 type SendMessageReqData struct {
@@ -18,9 +18,10 @@ type SendMessageReq struct {
 }
 
 type SendMessageResData struct {
-	RoomID  string `json:"room_id"`
-	From    string `json:"from"`
-	Content string `json:"content"`
+	RoomID   string `json:"room_id"`
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
+	Content  string `json:"content"`
 }
 
 type SendMessageRes struct {
@@ -28,7 +29,7 @@ type SendMessageRes struct {
 	Data SendMessageResData `json:"data"`
 }
 
-func SendMessage(s *structs.State, userID string, c *websocket.Conn, data []byte) error {
+func SendMessage(s *rstructs.State, userID string, c *websocket.Conn, data []byte) error {
 	var r SendMessageReq
 	err := json.Unmarshal(data, &r)
 	if err != nil {

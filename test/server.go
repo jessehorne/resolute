@@ -12,7 +12,7 @@ func main() {
 	fmt.Println("listening on:", host)
 
 	s := resolute.NewServer("/v1", host)
-	if err := s.Listen(); err != nil {
+	if err := s.Listen("./cert.pem", "./key.pem"); err != nil {
 		fmt.Println(err)
 	}
 }

@@ -79,7 +79,7 @@ func NewServer(path, host string) *Server {
 	}
 }
 
-func (s *Server) Listen() error {
+func (s *Server) Listen(pubPath, privPath string) error {
 	http.HandleFunc(s.Path, s.Handler)
-	return http.ListenAndServe(s.Host, nil)
+	return http.ListenAndServeTLS(s.Host, pubPath, privPath, nil)
 }

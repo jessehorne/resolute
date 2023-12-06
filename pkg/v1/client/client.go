@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"log"
@@ -34,10 +35,15 @@ type Client struct {
 	Conn *websocket.Conn
 }
 
-func NewClient(path, host string) *Client {
-	u := url.URL{Scheme: "ws", Host: host, Path: path}
+func NewClient(path, host string, tlsConf *tls.Config) *Client {
+	u := url.URL{Scheme: "wss", Host: host, Path: path}
 
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	var c *websocket.Conn
+
+	dialer := *websocket.DefaultDialer
+	dialer.TLSClientConfig = tlsConf
+
+	c, _, err := dialer.Dial(u.String(), nil)
 	if err != nil {
 		log.Fatalln(err)
 	}

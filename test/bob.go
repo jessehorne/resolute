@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -8,7 +9,8 @@ import (
 )
 
 func main() {
-	c := client.NewClient("/v1", "127.0.0.1:5656")
+	tlsConf := &tls.Config{InsecureSkipVerify: true}
+	c := client.NewClient("/v1", "127.0.0.1:5656", tlsConf)
 
 	roomID := "1cziERIkWDI9kKoeB4rytoaEijQUSfCG"
 	roomKey := "UKO25mTKUerloYLJ69syBR9wFwis1zwm"

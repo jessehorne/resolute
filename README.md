@@ -6,7 +6,7 @@ A simple chat service backend designed for short-term + anonymous conversations.
 
 # Overview
 
-Rësolute was started as a learning project to further my skills and understanding of secure and scalable communications systems. The project is not yet secure. I am first focusing on building out the core chat functionality.
+Rësolute started as a learning project to further my skills and understanding of secure and scalable communications systems. The project is not yet secure. I am first focusing on building out the core chat functionality.
 
 In the future, I will be integrating E2EE, a solution(s) to forward secrecy, message padding and so on, to address security/privacy concerns. There is a lot of work to do.
 

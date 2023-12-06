@@ -21,3 +21,8 @@
 go.work
 
 .idea/
+
+key.pem
+cert.pem
+san.cnf
+Makefile

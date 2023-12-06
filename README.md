@@ -1,11 +1,19 @@
-Resolute
-===
+![Resolute Logo](./assets/logo-wide.png)
 
-A simple chat service backend designed for anonymous, short-term conversations.
+A simple chat service backend designed for short-term + anonymous conversations.
 
-*Please note: This is a learning project. Use at your own risk. While I'm working to build in E2EE and other security/privacy measures over time, this project is unfinished and untested.*
+**Please note: This is a learning project. Use at your own risk. There's many steps yet to take for this to be ready for production.**
 
-Currently, resolute is best suited for short term conversations where chat history and user identification isn't needed.
+# Overview
+
+Rësolute was started as a learning project to further my skills and understanding of secure and scalable communications systems. The project is not yet secure. I am first focusing on building out the core chat functionality.
+
+In the future, I will be integrating E2EE, a solution(s) to forward secrecy, message padding and so on, to address security/privacy concerns. There is a lot of work to do.
+
+Things are very likely to change drastically as I work towards these goals. **Stay tuned.**
+
+Feel free to create an issue if you find a bug or want to suggest a feature.
+
 
 # Usage
 

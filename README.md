@@ -1,23 +1,23 @@
 ![Resolute Logo](./assets/logo-wide.png)
 
-A simple chat service backend designed for short-term + anonymous conversations.
+A simple chat service backend designed for ephemeral, anonymous conversations.
 
-**Please note: This is a learning project. Use at your own risk. There's many steps yet to take for this to be ready for production.**
+### Project status: NOT READY FOR PRODUCTION
 
 # Overview
 
-Rësolute started as a learning project to further my skills and understanding of secure and scalable communications systems. The project is not yet secure. I am first focusing on building out the core chat functionality.
+Rësolute started as a learning project to further my understanding of secure and scalable communications systems.
 
-In the future, I will be integrating E2EE, a solution(s) to forward secrecy, message padding and so on, to address security/privacy concerns. There is a lot of work to do.
+# Features
 
-Things are very likely to change drastically as I work towards these goals. **Stay tuned.**
+* E2EE for messages
+* Enforce WSS
+* Messages are not stored on disk
+* No data is collected
 
-Feel free to create an issue if you find a bug or want to suggest a feature.
-
+more coming soon...
 
 # Usage
-
-## Create Server
 
 ```go
 package main
@@ -30,16 +30,17 @@ import (
 
 func main() {
 	host := "127.0.0.1:5656"
-	
+
 	fmt.Println("listening on:", host)
-	
+
 	s := resolute.NewServer("/v1", host)
-	if err := s.Listen(); err != nil {
+	if err := s.Listen("./cert.pem", "./key.pem"); err != nil {
 		fmt.Println(err)
 	}
 }
-
 ```
+
+Also check out `examples/`.
 
 # Client API Documentation
 

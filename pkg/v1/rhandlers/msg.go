@@ -8,8 +8,9 @@ import (
 )
 
 type SendMessageReqData struct {
-	RoomID  string `json:"room_id"`
-	Content string `json:"content"`
+	RoomID   string `json:"room_id"`
+	Content  string `json:"content"`
+	ToUserID string `json:"to_user_id"`
 }
 
 type SendMessageReq struct {
@@ -61,7 +62,7 @@ func SendMessage(s *rstructs.State, userID string, c *websocket.Conn, data []byt
 		return nil
 	}
 
-	room.BroadcastMessage(userID, r.Data.Content)
+	room.BroadcastMessage(r.Data.ToUserID, r.Data.Content)
 
 	return nil
 }

@@ -5,27 +5,33 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/jessehorne/resolute/pkg/v1/rstructs"
+	"github.com/jessehorne/resolute/pkg/v1/util"
 )
 
-type JoinRoomOneTimeData struct {
+type JoinRoomOneTimeReqData struct {
 	RoomID     string `json:"room_id"`
 	OneTimeKey string `json:"one_time_key"`
 	Username   string `json:"username"`
+	PublicKey  string `json:"public_key"`
 }
 
 type JoinRoomOneTimeReq struct {
-	Cmd  string              `json:"cmd"`
-	Data JoinRoomOneTimeData `json:"data"`
+	Cmd  string                 `json:"cmd"`
+	Data JoinRoomOneTimeReqData `json:"data"`
 }
 
 type JoinRoomOneTimeResData struct {
-	RoomID   string `json:"room_id"`
-	RoomName string `json:"room_name"`
+	RoomID    string `json:"room_id"`
+	RoomName  string `json:"room_name"`
+	UserID    string `json:"user_id"`
+	Username  string `json:"username"`
+	PublicKey string `json:"public_key"`
 }
 
 type JoinRoomOneTimeRes struct {
-	Cmd  string                 `json:"cmd"`
-	Data JoinRoomOneTimeResData `json:"data"`
+	Cmd   string                 `json:"cmd"`
+	Data  JoinRoomOneTimeResData `json:"data"`
+	Users []rstructs.JoinedUser  `json:"users"`
 }
 
 func JoinRoomOneTime(s *rstructs.State, userID string, c *websocket.Conn, data []byte) error {
@@ -51,26 +57,53 @@ func JoinRoomOneTime(s *rstructs.State, userID string, c *websocket.Conn, data [
 	// check that one time key exists
 	for i, k := range room.OneTimeJoinKeys {
 		if k == r.Data.OneTimeKey {
-			// add user to room
-			room.AddUser(&rstructs.User{
-				UserID:   userID,
-				Username: r.Data.Username,
-				Conn:     c,
+			key, err := util.ParsePublicKey(r.Data.PublicKey)
+			if err != nil {
+				// TODO?
+				break
+			}
+
+			// tell current room users you joined
+			for _, u := range room.Users {
+				if u.UserID == userID {
+					continue
+				}
+
+				u.Conn.WriteJSON(JoinRoomOneTimeRes{
+					Cmd: "user-joined-onetime",
+					Data: JoinRoomOneTimeResData{
+						RoomID:    room.ID,
+						RoomName:  room.Name,
+						UserID:    userID,
+						Username:  r.Data.Username,
+						PublicKey: r.Data.PublicKey,
+					},
+				})
+			}
+
+			// tell yourself your id
+			c.WriteJSON(YouJoinedRoomRes{
+				Cmd: "joined",
+				Data: YouJoinedRoomResData{
+					UserID:   userID,
+					RoomID:   room.ID,
+					RoomName: room.Name,
+					Users:    room.GetUsers(),
+				},
 			})
+
+			newUser := &rstructs.User{
+				UserID:    userID,
+				Conn:      c,
+				Username:  r.Data.Username,
+				PublicKey: key,
+			}
+			room.AddUser(newUser)
 
 			// delete one time key
 			uptil := room.OneTimeJoinKeys[:i]
 			until := room.OneTimeJoinKeys[i+1:]
 			room.OneTimeJoinKeys = append(uptil, until...)
-
-			// send response
-			c.WriteJSON(JoinRoomOneTimeRes{
-				Cmd: "join-room-onetime",
-				Data: JoinRoomOneTimeResData{
-					RoomID:   r.Data.RoomID,
-					RoomName: room.Name,
-				},
-			})
 
 			return nil
 		}
@@ -91,6 +124,7 @@ type JoinRoomForeverReqData struct {
 	RoomID     string `json:"room_id"`
 	ForeverKey string `json:"forever_key"`
 	Username   string `json:"username"`
+	PublicKey  string `json:"public_key"`
 }
 
 type JoinRoomForeverReq struct {
@@ -99,8 +133,12 @@ type JoinRoomForeverReq struct {
 }
 
 type JoinRoomForeverResData struct {
-	RoomID   string `json:"room_id"`
-	RoomName string `json:"room_name"`
+	RoomID    string                `json:"room_id"`
+	RoomName  string                `json:"room_name"`
+	UserID    string                `json:"user_id"`
+	Username  string                `json:"username"`
+	PublicKey string                `json:"public_key"`
+	Users     []rstructs.JoinedUser `json:"users"`
 }
 
 type JoinRoomForeverRes struct {
@@ -152,20 +190,61 @@ func JoinRoomForever(s *rstructs.State, userID string, c *websocket.Conn, data [
 		return nil
 	}
 
-	// add user to room and send response
-	room.AddUser(&rstructs.User{
-		UserID:   userID,
-		Username: r.Data.Username,
-		Conn:     c,
-	})
+	// add user to room and send response to all users in room
+	key, err := util.ParsePublicKey(r.Data.PublicKey)
+	if err != nil {
+		// TODO
+		return nil
+	}
 
-	c.WriteJSON(JoinRoomForeverRes{
-		Cmd: "join-room-forever",
-		Data: JoinRoomForeverResData{
+	// tell current room users you joined
+	for _, u := range room.Users {
+		if u.UserID == userID {
+			continue
+		}
+
+		u.Conn.WriteJSON(JoinRoomForeverRes{
+			Cmd: "user-joined-forever",
+			Data: JoinRoomForeverResData{
+				RoomID:    room.ID,
+				RoomName:  room.Name,
+				UserID:    userID,
+				Username:  r.Data.Username,
+				PublicKey: r.Data.PublicKey,
+			},
+		})
+	}
+
+	// tell yourself your id
+	c.WriteJSON(YouJoinedRoomRes{
+		Cmd: "joined",
+		Data: YouJoinedRoomResData{
+			UserID:   userID,
 			RoomID:   room.ID,
 			RoomName: room.Name,
+			Users:    room.GetUsers(),
 		},
 	})
 
+	newUser := &rstructs.User{
+		UserID:    userID,
+		Conn:      c,
+		Username:  r.Data.Username,
+		PublicKey: key,
+	}
+	room.AddUser(newUser)
+
 	return nil
+}
+
+type YouJoinedRoomResData struct {
+	UserID   string                `json:"user_id"`
+	RoomID   string                `json:"room_id"`
+	RoomName string                `json:"room_name"`
+	Users    []rstructs.JoinedUser `json:"users"`
+}
+
+type YouJoinedRoomRes struct {
+	Cmd  string               `json:"cmd"`
+	Data YouJoinedRoomResData `json:"data"`
 }

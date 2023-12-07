@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/rsa"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -14,6 +15,7 @@ import (
 	"github.com/jessehorne/resolute/pkg/v1/resolute"
 	"github.com/jessehorne/resolute/pkg/v1/rhandlers"
 	"github.com/jessehorne/resolute/pkg/v1/rstructs"
+	"github.com/jessehorne/resolute/pkg/v1/util"
 )
 
 const (
@@ -29,13 +31,15 @@ type Client struct {
 
 	// when user creates room, we add CRoom to RoomQueue. When Rooms is filled,
 	// we'll update the CRoom's reference to Room
-	Rooms     map[string]*CRoom // rooms the user is in. key is the room id
+	Rooms     []*CRoom // rooms the user is in. key is the room id
 	RoomQueue []*CRoom
 
 	Conn *websocket.Conn
+
+	PrivateKey *rsa.PrivateKey
 }
 
-func NewClient(path, host string, tlsConf *tls.Config) *Client {
+func NewClient(path, host string, tlsConf *tls.Config) (*Client, error) {
 	u := url.URL{Scheme: "wss", Host: host, Path: path}
 
 	var c *websocket.Conn
@@ -48,15 +52,22 @@ func NewClient(path, host string, tlsConf *tls.Config) *Client {
 		log.Fatalln(err)
 	}
 
-	newClient := &Client{
-		Host:      host,
-		Path:      path,
-		Rooms:     map[string]*CRoom{},
-		RoomQueue: []*CRoom{},
-		Conn:      c,
+	// generate keys that will last the lifetime of this users connection
+	key, err := util.GenerateAsymmetricKey()
+	if err != nil {
+		return nil, err
 	}
 
-	return newClient
+	newClient := &Client{
+		Host:       host,
+		Path:       path,
+		Rooms:      []*CRoom{},
+		RoomQueue:  []*CRoom{},
+		Conn:       c,
+		PrivateKey: key,
+	}
+
+	return newClient, nil
 }
 
 func (c *Client) Listen() {
@@ -86,25 +97,25 @@ func (c *Client) Listen() {
 					// TODO
 				}
 
-				if len(c.RoomQueue) == 0 {
-					continue
+				// get room and update values
+				for _, ro := range c.Rooms {
+					if ro.ClientRoomID == r.ClientRoomID {
+						ro.Room = &rstructs.Room{
+							ID:              r.Room.ID,
+							OwnerID:         r.Room.OwnerID,
+							Name:            r.Room.Name,
+							OneTimeJoinKeys: []string{},
+							ForeverJoinKey:  "",
+							Users:           map[string]*rstructs.User{},
+						}
+
+						// update client id
+						c.UserID = r.Room.OwnerID
+						ro.call("created", r.Room.ID)
+
+						break
+					}
 				}
-
-				// get first room in queue
-				first := c.RoomQueue[0]
-				first.Room = &rstructs.Room{
-					ID:              r.Room.ID,
-					OwnerID:         r.Room.OwnerID,
-					Name:            r.Room.Name,
-					OneTimeJoinKeys: []string{},
-					ForeverJoinKey:  "",
-					Users:           map[string]*rstructs.User{},
-				}
-
-				c.Rooms[r.Room.ID] = first
-				c.RoomQueue = c.RoomQueue[1:]
-
-				first.call("created", nil)
 			} else if cmd.Cmd == "room-key-onetime" {
 				var r rhandlers.GetRoomOneTimeKeyResponse
 				err := json.Unmarshal(message, &r)
@@ -112,12 +123,15 @@ func (c *Client) Listen() {
 					// TODO
 				}
 
-				room, ok := c.Rooms[r.Data.RoomID]
-				if ok {
-					room.call("key-onetime", map[string]string{
-						"room_id": r.Data.RoomID,
-						"key":     r.Data.OneTimeKey,
-					})
+				for _, ro := range c.Rooms {
+					if ro.Room.ID == r.Data.RoomID {
+						ro.call("key-onetime", map[string]string{
+							"room_id": r.Data.RoomID,
+							"key":     r.Data.OneTimeKey,
+						})
+
+						break
+					}
 				}
 			} else if cmd.Cmd == "room-key-forever" {
 				var r rhandlers.GetRoomForeverKeyResponse
@@ -126,30 +140,42 @@ func (c *Client) Listen() {
 					// TODO
 				}
 
-				room, ok := c.Rooms[r.Data.RoomID]
-				if ok {
-					room.call("key-forever", map[string]string{
-						"room_id": r.Data.RoomID,
-						"key":     r.Data.ForeverJoinKey,
-					})
+				for _, ro := range c.Rooms {
+					if ro.Room.ID == r.Data.RoomID {
+						ro.call("key-forever", map[string]string{
+							"room_id": r.Data.RoomID,
+							"key":     r.Data.ForeverJoinKey,
+						})
+
+						break
+					}
 				}
 			} else if cmd.Cmd == "send-message" {
 				var r rhandlers.SendMessageRes
 				err := json.Unmarshal(message, &r)
 				if err != nil {
 					// TODO
+					return
 				}
 
-				room, ok := c.Rooms[r.Data.RoomID]
-				if ok {
-					room.call("send-message", map[string]string{
-						"room_id":  r.Data.RoomID,
-						"user_id":  r.Data.UserID,
-						"username": r.Data.Username,
-						"content":  r.Data.Content,
-					})
+				d, err := util.DecryptMessage(c.PrivateKey, r.Data.Content)
+				if err != nil {
+					return
 				}
-			} else if cmd.Cmd == "join-room-onetime" {
+
+				for _, ro := range c.Rooms {
+					if ro.Room.ID == r.Data.RoomID {
+						ro.call("send-message", map[string]string{
+							"room_id":  r.Data.RoomID,
+							"user_id":  r.Data.UserID,
+							"username": r.Data.Username,
+							"content":  d,
+						})
+
+						break
+					}
+				}
+			} else if cmd.Cmd == "user-joined-onetime" {
 				var r rhandlers.JoinRoomOneTimeRes
 
 				err := json.Unmarshal(message, &r)
@@ -157,27 +183,24 @@ func (c *Client) Listen() {
 					// TODO
 				}
 
-				if len(c.RoomQueue) == 0 {
-					continue
+				for _, ro := range c.Rooms {
+					if ro.Room.ID == r.Data.RoomID {
+
+						// add this user to list of users in room
+						ro.AddJoinedUser(r.Data.UserID, r.Data.Username, r.Data.PublicKey)
+
+						ro.call("user-joined", map[string]string{
+							"room_id":   r.Data.RoomID,
+							"room_name": r.Data.RoomName,
+							"user_id":   r.Data.UserID,
+							"username":  r.Data.Username,
+							"key_type":  "forever",
+						})
+
+						break
+					}
 				}
-
-				// get first room in queue
-				first := c.RoomQueue[0]
-				first.Room = &rstructs.Room{
-					ID:              r.Data.RoomID,
-					Name:            r.Data.RoomName,
-					OneTimeJoinKeys: []string{},
-					Users:           map[string]*rstructs.User{},
-				}
-
-				c.Rooms[r.Data.RoomID] = first
-				c.RoomQueue = c.RoomQueue[1:]
-
-				first.call("joined", map[string]string{
-					"room_id":   first.Room.ID,
-					"room_name": first.Room.Name,
-				})
-			} else if cmd.Cmd == "join-room-forever" {
+			} else if cmd.Cmd == "user-joined-forever" {
 				var r rhandlers.JoinRoomForeverRes
 
 				err := json.Unmarshal(message, &r)
@@ -185,26 +208,42 @@ func (c *Client) Listen() {
 					// TODO
 				}
 
-				if len(c.RoomQueue) == 0 {
-					continue
+				for _, ro := range c.Rooms {
+					if ro.Room.ID == r.Data.RoomID {
+
+						// add this user to list of users in room
+						ro.AddJoinedUser(r.Data.UserID, r.Data.Username, r.Data.PublicKey)
+
+						ro.call("user-joined", map[string]string{
+							"room_id":   r.Data.RoomID,
+							"room_name": r.Data.RoomName,
+							"user_id":   r.Data.UserID,
+							"username":  r.Data.Username,
+							"key_type":  "forever",
+						})
+
+						break
+					}
+				}
+			} else if cmd.Cmd == "joined" {
+				var r rhandlers.YouJoinedRoomRes
+				err := json.Unmarshal(message, &r)
+				if err != nil {
+					// TODO
 				}
 
-				// get first room in queue
-				first := c.RoomQueue[0]
-				first.Room = &rstructs.Room{
-					ID:              r.Data.RoomID,
-					Name:            r.Data.RoomName,
-					OneTimeJoinKeys: []string{},
-					Users:           map[string]*rstructs.User{},
+				for _, ro := range c.Rooms {
+					if ro.Room.ID == r.Data.RoomID {
+						c.UserID = r.Data.UserID
+						ro.UpdateUsers(r.Data.Users)
+						ro.call("joined", map[string]string{
+							"room_id":   r.Data.RoomID,
+							"room_name": r.Data.RoomName,
+						})
+
+						break
+					}
 				}
-
-				c.Rooms[r.Data.RoomID] = first
-				c.RoomQueue = c.RoomQueue[1:]
-
-				first.call("joined", map[string]string{
-					"room_id":   first.Room.ID,
-					"room_name": first.Room.Name,
-				})
 			}
 		}
 	}()
@@ -218,28 +257,30 @@ func (c *Client) Listen() {
 }
 
 func (c *Client) JoinRoom(keyType, username, roomID, key string) (*CRoom, error) {
-	if keyType == "onetime" {
-		req := rhandlers.JoinRoomOneTimeReq{
-			Cmd: "join-room-onetime",
-			Data: rhandlers.JoinRoomOneTimeData{
-				RoomID:     roomID,
-				OneTimeKey: key,
-				Username:   username,
-			},
-		}
+	pubKeyString := util.PublicKeyToString(&c.PrivateKey.PublicKey)
 
+	if keyType == "onetime" {
 		cr := &CRoom{
-			Client:       c,
-			IsOwner:      false,
-			ReqUsername:  username,
-			Room:         nil,
+			Client:      c,
+			IsOwner:     false,
+			ReqUsername: username,
+			Room: &rstructs.Room{
+				ID: roomID,
+			},
 			MessageQueue: []string{},
 			callbacks:    map[string]interface{}{},
 		}
+		c.Rooms = append(c.Rooms, cr)
 
-		// add room to queue...it gets updated when the server lets us know we created it successfully
-		c.RoomQueue = append(c.RoomQueue, cr)
-
+		req := rhandlers.JoinRoomOneTimeReq{
+			Cmd: "join-room-onetime",
+			Data: rhandlers.JoinRoomOneTimeReqData{
+				RoomID:     roomID,
+				OneTimeKey: key,
+				Username:   username,
+				PublicKey:  pubKeyString,
+			},
+		}
 		err := c.Conn.WriteJSON(req)
 		if err != nil {
 			log.Fatalln("joinRoomOnetime", err)
@@ -247,27 +288,27 @@ func (c *Client) JoinRoom(keyType, username, roomID, key string) (*CRoom, error)
 
 		return cr, nil
 	} else if keyType == "forever" {
+		cr := &CRoom{
+			Client:      c,
+			IsOwner:     false,
+			ReqUsername: username,
+			Room: &rstructs.Room{
+				ID: roomID,
+			},
+			MessageQueue: []string{},
+			callbacks:    map[string]interface{}{},
+		}
+		c.Rooms = append(c.Rooms, cr)
+
 		req := rhandlers.JoinRoomForeverReq{
 			Cmd: "join-room-forever",
 			Data: rhandlers.JoinRoomForeverReqData{
 				RoomID:     roomID,
 				ForeverKey: key,
 				Username:   username,
+				PublicKey:  pubKeyString,
 			},
 		}
-
-		cr := &CRoom{
-			Client:       c,
-			IsOwner:      false,
-			ReqUsername:  username,
-			Room:         nil,
-			MessageQueue: []string{},
-			callbacks:    map[string]interface{}{},
-		}
-
-		// add room to queue...it gets updated when the server lets us know we created it successfully
-		c.RoomQueue = append(c.RoomQueue, cr)
-
 		err := c.Conn.WriteJSON(req)
 		if err != nil {
 			log.Fatalln("joinRoomForever", err)
@@ -279,16 +320,21 @@ func (c *Client) JoinRoom(keyType, username, roomID, key string) (*CRoom, error)
 	return nil, errors.New("invalid keyType")
 }
 
-func (c *Client) CreateRoom(name, username string) *CRoom {
+func (c *Client) CreateRoom(name, username, clientRoomID string) *CRoom {
+	pubKeyString := util.PublicKeyToString(&c.PrivateKey.PublicKey)
+
 	req := rhandlers.CreateRoomRequest{
 		Cmd: "create-room",
 		Data: rhandlers.CreateRoomRequestData{
-			Name:     name,
-			Username: username,
+			Name:            name,
+			Username:        username,
+			ClientRoomID:    clientRoomID,
+			PublicKeyString: pubKeyString,
 		},
 	}
 
 	cr := &CRoom{
+		ClientRoomID: clientRoomID,
 		Client:       c,
 		IsOwner:      true,
 		ReqName:      name,
@@ -298,8 +344,7 @@ func (c *Client) CreateRoom(name, username string) *CRoom {
 		callbacks:    map[string]interface{}{},
 	}
 
-	// add room to queue...it gets updated when the server lets us know we created it successfully
-	c.RoomQueue = append(c.RoomQueue, cr)
+	c.Rooms = append(c.Rooms, cr)
 
 	err := c.Conn.WriteJSON(req)
 	if err != nil {

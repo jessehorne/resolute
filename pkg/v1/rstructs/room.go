@@ -2,15 +2,16 @@ package rstructs
 
 import (
 	"github.com/dchest/uniuri"
+	"github.com/jessehorne/resolute/pkg/v1/util"
 )
 
 type Room struct {
 	ID              string           `json:"room_id"`
-	OwnerID         string           `json:"-"`
+	OwnerID         string           `json:"owner_id"`
 	Name            string           `json:"name"`
 	OneTimeJoinKeys []string         `json:"one_time_join_keys"`
 	ForeverJoinKey  string           `json:"forever_join_key"`
-	Users           map[string]*User `json:"-"`
+	Users           map[string]*User `json:"users"`
 }
 
 func NewRoom(name, ownerID string) *Room {
@@ -55,15 +56,25 @@ func (r *Room) BroadcastMessage(userID, content string) {
 		return
 	}
 
-	for _, user := range r.Users {
-		user.Conn.WriteJSON(BroadcastMessageRes{
-			Cmd: "send-message",
-			Data: BroadcastMessageResData{
-				RoomID:   r.ID,
-				UserID:   u.UserID,
-				Username: u.Username,
-				Content:  content,
-			},
+	u.Conn.WriteJSON(BroadcastMessageRes{
+		Cmd: "send-message",
+		Data: BroadcastMessageResData{
+			RoomID:   r.ID,
+			UserID:   u.UserID,
+			Username: u.Username,
+			Content:  content,
+		},
+	})
+}
+
+func (r *Room) GetUsers() []JoinedUser {
+	var users []JoinedUser
+	for _, u := range r.Users {
+		users = append(users, JoinedUser{
+			UserID:          u.UserID,
+			Username:        u.Username,
+			PublicKeyString: util.PublicKeyToString(u.PublicKey),
 		})
 	}
+	return users
 }

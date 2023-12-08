@@ -20,7 +20,7 @@ To join a room, the creator of the room must first generate one-time or "forever
 
 ## Messages
 
-Messages are encrypted on the client using each users public key in a Room and are sent to the server from the client where the server then relays each message to the appropriate users. Please see the client API documentation for more information.
+Messages are encrypted on the client using each destination-users public key in a Room and are sent to the server from the client where the server then relays each message to the appropriate users. Please see the client API documentation for more information.
 
 **more coming soon...**
 

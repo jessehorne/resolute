@@ -1,5 +1,8 @@
 # API
 
+** THIS IS NOT UP TO DATE **
+** PLEASE SEE `examples/alice.go` and `examples/bob.go` for examples using the Go client library...**
+
 Resolute uses websockets and JSON to communicate. When you establish a connection, you can send the following commands...
 
 
@@ -96,7 +99,7 @@ First you need the Room ID and a one-time or forever key to join. The owner of t
    "data":{
       "room_id":"iL6oB1RBw1AK1Odg6UoU397eDozV3fek",
       "one_time_key":"kQQ8ZKpz0PmoqQQbGILvgoMc72etKIbI",
-      "username":"bob"
+      "username":"bob",
    }
 }
 ```

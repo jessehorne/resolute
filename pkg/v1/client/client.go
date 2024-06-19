@@ -53,7 +53,7 @@ func NewClient(path, host string, tlsConf *tls.Config) (*Client, error) {
 	}
 
 	// generate keys that will last the lifetime of this users connection
-	key, err := util.GenerateAsymmetricKey()
+	key, err := util.GenerateKeyRSA2048()
 	if err != nil {
 		return nil, err
 	}

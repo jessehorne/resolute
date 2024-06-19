@@ -8,7 +8,7 @@ import (
 	"encoding/pem"
 )
 
-func GenerateAsymmetricKey() (*rsa.PrivateKey, error) {
+func GenerateKeyRSA2048() (*rsa.PrivateKey, error) {
 	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, err

@@ -1,11 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"crypto/tls"
 	"fmt"
-	"time"
-
 	"github.com/jessehorne/resolute/pkg/v1/client"
+	"os"
 )
 
 func main() {
@@ -32,9 +32,13 @@ func main() {
 		})
 
 		go func() {
+			reader := bufio.NewReader(os.Stdin)
 			for {
-				testRoom.SendMessage("hello world from alice")
-				time.Sleep(5 * time.Second)
+				text, _ := reader.ReadString('\n')
+				if err := testRoom.SendMessage(text); err != nil {
+					fmt.Println(err)
+				}
+				fmt.Println("SENDING: ", text)
 			}
 		}()
 		testRoom.On("send-message", func(roomID, userID, username, content string) {

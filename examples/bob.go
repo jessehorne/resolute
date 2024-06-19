@@ -1,11 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"crypto/tls"
 	"fmt"
-	"time"
-
 	"github.com/jessehorne/resolute/pkg/v1/client"
+	"os"
 )
 
 func main() {
@@ -15,8 +15,8 @@ func main() {
 		panic(err)
 	}
 
-	roomID := "08qXiXm4J5Ad600j26uvxpbRmLvkDaJ1"
-	roomKey := "xHqSrGvcOV51LQt3i2zxKcH28Ge3meFd"
+	roomID := "VGvpY6GLBds19owIMU3kkZUThnz9Rgv1"
+	roomKey := "GTd5ugAgwvQ6x0LLWMxMg5WhCS6sa2eD"
 	testRoom, err := c.JoinRoom("onetime", "bob", roomID, roomKey)
 	if err != nil {
 		panic(err)
@@ -27,9 +27,13 @@ func main() {
 		fmt.Println("[SUCCESS] joined room", roomID, roomName)
 
 		go func() {
+			reader := bufio.NewReader(os.Stdin)
 			for {
-				testRoom.SendMessage("hello world from bob")
-				time.Sleep(5 * time.Second)
+				text, _ := reader.ReadString('\n')
+				if err := testRoom.SendMessage(text); err != nil {
+					fmt.Println(err)
+				}
+				fmt.Println("SENDING: ", text)
 			}
 		}()
 		testRoom.On("send-message", func(roomID, userID, username, content string) {
